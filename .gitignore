@@ -1,0 +1,6 @@
+*.aux
+*.log
+*.out
+*.fmt
+_region_.tex
+*.pdf
