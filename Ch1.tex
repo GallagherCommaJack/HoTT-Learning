@@ -1,0 +1,157 @@
+\input{prelude}
+
+\usepackage{amsthm}
+\hwnum{1}
+
+\begin{document}
+
+\input{book-macros}
+
+\problemnumber{1}
+\begin{problem}
+  Given functions $f : A \to B$ and $g : B \to C$, define their \emph{composite} $g \circ f : A \to C$.
+  Show that we have $h \circ (g \circ f) \jdeq (h \circ g) \circ f$.
+\end{problem}
+
+\begin{solution}
+  We will define $g \circ f$ as the lambda abstraction $\lambda x. g(f(x))$. Then
+  \begin{align*}
+    h \circ (g \circ f) &\jdeq \lambda x. h((\lambda y. g(f(y)))(x)) \\
+                        &\jdeq \lambda x. h(g(f(x))) \\
+                        &\jdeq \lambda x. (\lambda y. h(g(y)))(f(x)) \\
+                        &\jdeq (h \circ g) \circ f
+  \end{align*}
+\end{solution}
+
+\problemnumber{4}
+\begin{problem}
+  Assuming as given only the \emph{iterator} for natural numbers
+  $$ \ite : \prd{C : U} C \to (C \to C) \to \nat \to C $$
+  with the defining equations
+  \begin{align*}
+    \ite(C,c_0,c_s,0) &\defeq c_0,\\
+    \ite(C,c_0,c_s,\suc(n)) &\defeq c_s(\ite(C,c_0,c_s,n)),
+  \end{align*}
+  derive a function having the type of the recursor $\rec{\nat}$.
+  Show that the defining equations for the recursor hold propositionally for this function, using the induction principle for $\nat$.
+\end{problem}
+
+\begin{solution}
+  Given a type $C$, with an element $c_0$ and a function $c_s : \nat \to C \to C$, our task is to define a new function $f : \nat \to C$ such that
+  \begin{align*}
+    f(0) &= c_0 \\
+    f(\suc(n)) &= c_s(n,f(n))
+  \end{align*}
+  We will do this by iterating in $\nat \times C$.
+  First, let $c_0' \defeq (0,c_0)$.
+  We then define $c_s' : \nat \times C \to \nat \times C$ using the induction principle for product types as follows:
+  $$ c_s'((n,c_n)) \defeq (\suc(n) , c_s(n,c_n)) $$
+  We can take $f \defeq \snd \circ \ite(\nat \times C, c_0', c_s')$.
+  For the remainder of this proof, we will refer to the function $\ite(\nat \times C,c_0',c_s')$ as $\ite_C$.
+  Then $f(0) \jdeq \snd(\ite_C(0)) \jdeq \snd(c_0') \jdeq c_0$, so $\refl{f(0)} : f(0) = c_0$.
+
+  Before proving the successor equation, we will give as a lemma
+  $$ \mathsf{iterp}_1 : \prd{n : \nat} \fst(\ite_C(n)) = n $$
+  which we will show by induction on $n$.
+  Clearly, $\fst(\ite_C(0)) \jdeq \fst(c_0' \jdeq (0,c_0)) \jdeq 0$.
+  For the successor case, let $n : \nat$, taking $I : \fst(\ite_C(n)) = n$ as our induction hypothesis.
+  Then $\ite_C(\suc(n)) \jdeq c_s'(\ite_C(n))$.
+  Using the induction principle for products, take $\ite_C(n)$ to be $(n',c_n)$.
+  Then by path induction we can assume $n'$ is $n$ and $I$ is $\refl{n}$.
+  Then $c_s'((n,c_n)) \jdeq (\suc(n),c_s(n,c_n))$.
+
+  To get our equation, note that $f(\suc(n)) \jdeq \snd(c_s'(\ite_C(n)))$.
+  Using the induction principle for products, we can assume $\ite_C(n)$ is $(n',c_n)$.
+  Then $c_s'((n',c_n)) \jdeq (\suc(n'),c_s(n',c_n))$.
+  Rewriting by the above lemma, we have $(\suc(n'),c_s(n',c_n)) = (\suc(n),c_s(n,c_n))$, and thus $f(\suc(n)) = c_s(n,c_n)$.
+  To finish the proof we need only show that $f(n) = c_n$, which is immediate from the definition of $f(n)$ as $\snd(\ite_C(n))$.
+\end{solution}
+
+\problemnumber{9}
+\begin{problem}
+  Define the type family $\Fin : \nat \to \UU$ and the dependent function $\fmax : \prd{n:\nat} \Fin(n + 1)$.
+\end{problem}
+
+\begin{solution}
+  Elements of $\Fin$ will be constructed either from $\mathsf{fzero} : \prd{n : \nat}\Fin(\suc(n))$ or $\mathsf{fsucc} : \prd{n : \nat} \Fin(n) \to \Fin(\suc(n))$.
+  The function $\fmax$ can then be constructed with the following defining equations:
+  \begin{align*}
+    \fmax(0) &\defeq \mathsf{fzero}(0) \\
+    \fmax(\suc(n)) &\defeq \mathsf{fsucc}(\suc(n),\fmax(n))
+  \end{align*}
+\end{solution}
+
+\newpage
+
+\problemnumber{10}
+\begin{problem}
+  Show that the Ackermann function $\ack : \nat \to \nat \to \nat$  is definable using only $\rec{\nat}$ satisfying the following equations:
+  \begin{align*}
+    \ack(0,n) &\jdeq \suc(n) \\
+    \ack(\suc(m),0) &\jdeq \ack(m,1) \\
+    \ack(\suc(m),\suc(n)) &\jdeq \ack(m,\ack(\suc(m),n))
+  \end{align*}
+\end{problem}
+
+\begin{solution}
+  First, let $\ack_s : \nat \to (\nat \to \nat) \to (\nat \to \nat)$ be the function
+  $$ \ack_s(a,n) \defeq \rec{\nat} (\lam{m}a(1),\lam{n}{a'} a \circ a' \circ \suc,n)$$
+  Then we will define $\ack$ to be the function
+  $$ \ack(m,n) \defeq \rec{\nat} (\suc,\lam{m}{a}{n} \ack_s(a,n)(m),m) $$
+  Which gives us
+  \begin{align*}
+    \ack(0,n)
+    &\jdeq \suc(n)\\
+    \ack(\suc(m),0)
+    &\jdeq \ack_s(\ack(m),0)(m) \\
+    &\jdeq \rec{\nat}((\lam{n} \ack(m,1)),(\lam{n}{a'} a \circ a' \circ \suc),0)(m) \\
+    &\jdeq (\lam{n} \ack(m,1))(m) \jdeq \ack(m,1) \\
+    \ack(\suc(m),\suc(n))
+    &\jdeq \ack_s(\ack(m),\suc(n))(m) \\
+    &\jdeq \rec{\nat}(\lam{n} \ack(m,1),\lam{n}{a'} \ack(m) \circ a' \circ \suc,\suc(n))(m)\\
+    &\jdeq (\ack(m) \circ \ack(-,n) \circ \suc)(m) \jdeq \ack(m,\ack(\suc(m),n))
+  \end{align*}
+\end{solution}
+
+\problemnumber{13}
+\begin{problem}
+  Derive the double negation of the law of excluded middle.
+\end{problem}
+
+\begin{solution}
+  Let $P : \UU$ be a type.
+  The law of excluded middle then says that we have either $P + \neg P$.
+  To derive its double negation, we will assume we have a proof $H : \neg(P + \neg P)$ and derive a contradiction.
+  Then we can take our proof to be
+  $$ H (\lam{p : P + \neg P}\rec{+}(H \circ \inl, H \circ \inr,p)) $$
+\end{solution}
+
+\newpage
+
+\problemnumber{14}
+\begin{problem}
+  Why do the induction principles for identity types not allow us to construct a function $f : \prd{A : \UU}{x : A}{p : x = x}(p = \refl{x})$ with the defining equation
+  $$ f(A,x,\refl{x}) \defeq \refl{\refl{x}} ?$$
+\end{problem}
+
+\begin{solution}
+  The trouble comes when we want to define the type family $C : \prd{y : A} x = y \to \UU$ such that $C(x,p) =_\UU (p =_{x = x} \refl{x})$.
+  What we want to say is $C(y,p) \defeq p = \refl{x}$, but this is ill typed, as the left hand side is a proof of $x = y$ while the right is a proof of $x = x$.
+
+  This does not constitute a fully general proof that $f$ is unprovable within type theory, but it certainly hints at it.
+  An actual proof can only be done by constructing a model in which the axiom fails to hold, of which the groupoid model was the first to be studied for this purpose, while the homotopical model is the one of interest in these exercises.
+
+  One interesting characteristic of this idea is that it becomes fairly trivial once you take homotopical information into account.
+  If equalities are paths, then the proof would essentially amount to saying arbitrary loops around a given point $x$ in a space $X$ are contractible, which we can immediately see to be false (just wind around the unit circle).
+\end{solution}
+
+\problemnumber{15}
+\begin{problem}
+  Show that indiscernability of identicals follows from path induction.
+\end{problem}
+
+\begin{solution}
+  Given an arbitrary type $A$ with $a,b : A$, $p : a =_A b$, a fibration $D : A \to \UU$, and a proof $d : D(a)$, our goal is to construct an element of $D(b)$.
+  By path induction it suffices to assume $a$ is $b$ and $p$ is $\refl{b}$, so we can simply take $d : D(b)$.
+\end{solution}
+\end{document}
